@@ -73,11 +73,10 @@ def get_current_price(stock_no):
 
     # 호출
     res = requests.get(URL, headers=headers, params=params)
-
     if res.status_code == 200 and res.json()["rt_cd"] == "0" :
-        return(res.json())
+        return res.json()["output"]
     # 토큰 만료 시
-    elif res.status_code == 200 and res.json()["msg_cd"] == "EGW00123" :
+    elif res.status_code == 200 and res["msg_cd"] == "EGW00123" :
         auth()
         get_current_price(stock_no)
     else:
@@ -112,8 +111,41 @@ def get_current_balance():
 
     return res
 
+def order(stock_no):
+    PATH = "/uapi/domestic-stock/v1/trading/order-cash"
+    URL = f"{URL_BASE}/{PATH}"
+    
+    headers = {
+        "Content-Type":"application/json", 
+        "authorization": f"Bearer {ACCESS_TOKEN}",
+        "appKey":APP_KEY,
+        "appSecret":APP_SECRET,
+        "tr_id":"VTTC0802U",
+        "custtype": "P"
+    }
+
+    params = {
+        "CANO":config["C_ANO"],
+        "ACNT_PRDT_CD": config["ACNT_PRDT_CD"],
+        "PDNO": stock_no,
+        "ORD_DVSN": "00",
+        "ORD_QTY": "3",
+        "ORD_UNPR": "150000"
+    } 
+
+    res = requests.post(URL, headers=headers, params=params).json()
+
+    return res
+
+
 pre_set()
 # print(get_current_price("005930"))
 # print(get_current_balance())
-for key, value in get_current_balance().items():
+# for key, value in get_current_balance().items():
+#     print(key, value)
+
+for key, value in get_current_price("005930").items():
+    print(key, value)
+
+for key, value in order("BBG000BLLVT7").items():
     print(key, value)
