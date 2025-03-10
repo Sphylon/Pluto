@@ -1,11 +1,7 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -84,40 +80,6 @@ func (c Config) Save2File(path string) error {
 	if err = os.WriteFile(getPath(c.IsMock, path), data, 0666); err != nil {
 		return fmt.Errorf("error while writing to %s:%v", path, err)
 	}
-
-	return nil
-}
-
-func (c *Config) Auth() error {
-	url := fmt.Sprintf("%s/oauth2/tokenP", c.Url)
-	body, _ := Body{"grant_type": "client_credentials",
-		"appkey": c.App.Key, "appsecret": c.App.Secret}.Marshal()
-	req, _ := http.NewRequest("POST", url, bytes.NewBuffer(body))
-	req.Header.Add("content-type", "application/json")
-
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("error while requesting auth:%v", err)
-	}
-	defer res.Body.Close()
-
-	data, err := io.ReadAll(res.Body)
-	if err != nil {
-		return fmt.Errorf("error while reading %v:%v", res, err)
-	}
-
-	var resBody Body
-	if err = json.Unmarshal(data, &resBody); err != nil {
-
-	}
-
-	if resBody["access_token"] != nil {
-		c.Access.Token, c.Access.Expired = resBody["access_token"].(string),
-			resBody["access_token_token_expired"].(string)
-	}
-
-	fmt.Println(c.Access)
 
 	return nil
 }

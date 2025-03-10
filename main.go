@@ -3,7 +3,12 @@ package main
 import "fmt"
 
 func main() {
-	c, _ := LoadConfig(".", true)
-	c.Auth()
-	fmt.Println(c.Save2File("."))
+	kisd, err := NewKISD(false)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	kisd.Auth()
+	kisd.GetPrice("012450")
+	kisd.Order("012450", true)
 }
