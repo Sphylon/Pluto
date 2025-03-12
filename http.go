@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 func Send(req *http.Request) (Result, error) {
@@ -56,10 +57,19 @@ func Req(base string, method string, header Header, param Param, body Body) (*ht
 }
 
 func Oauth2_Approval(c *Config) (Result, error) {
-	if req, err := Req(fmt.Sprintf("%s/oauth2/tokenP", c.Url), "POST",
-		Header{"content-type": "application/json"},
+	if req, err := Req(
+		fmt.Sprintf("%s/oauth2/tokenP", c.Url),
+		"POST",
+		Header{
+			"content-type": "application/json",
+		},
 		Param{},
-		Body{"grant_type": "client_credentials", "appkey": c.App.Key, "appsecret": c.App.Secret}); err != nil {
+		Body{
+			"grant_type": "client_credentials",
+			"appkey":     c.App.Key,
+			"appsecret":  c.App.Secret,
+		},
+	); err != nil {
 		return nil, fmt.Errorf("error while making request:%v", err)
 	} else {
 		return Send(req)
@@ -67,24 +77,29 @@ func Oauth2_Approval(c *Config) (Result, error) {
 }
 
 func Quote_Inquire_Price(no string, c *Config) (Result, error) {
-	if req, err := Req(fmt.Sprintf("%s/uapi/domestic-stock/v1/quotations/inquire-price", c.Url), "GET",
-		Header{"content-type": "application/json",
+	if req, err := Req(
+		fmt.Sprintf("%s/uapi/domestic-stock/v1/quotations/inquire-price", c.Url),
+		"GET",
+		Header{
+			"content-type":  "application/json",
 			"authorization": fmt.Sprintf("bearer %s", c.Access.Token),
 			"appKey":        c.App.Key,
 			"appSecret":     c.App.Secret,
-			"tr_id":         "FHKST01010100"},
+			"tr_id":         "FHKST01010100",
+		},
 		Param{
 			"FID_COND_MRKT_DIV_CODE": "UN",
 			"FID_INPUT_ISCD":         no,
 		},
-		Body{}); err != nil {
+		Body{},
+	); err != nil {
 		return nil, fmt.Errorf("error while making request:%v", err)
 	} else {
 		return Send(req)
 	}
 }
 
-func Trading_Order_Cash(no string, isBuy bool, c *Config) (Result, error) {
+func Trading_Order_Cash(no string, qty, price int, isBuy bool, c *Config) (Result, error) {
 	var tr_id string
 	if isBuy {
 		tr_id = "TTTC0802U"
@@ -92,7 +107,9 @@ func Trading_Order_Cash(no string, isBuy bool, c *Config) (Result, error) {
 		tr_id = "TTTC0801U"
 	}
 
-	if req, err := Req(fmt.Sprintf("%s/uapi/domestic-stock/v1/trading/order-cash", c.Url), "POST",
+	if req, err := Req(
+		fmt.Sprintf("%s/uapi/domestic-stock/v1/trading/order-cash", c.Url),
+		"POST",
 		Header{
 			"content-type":  "application/json",
 			"authorization": fmt.Sprintf("bearer %s", c.Access.Token),
@@ -107,12 +124,16 @@ func Trading_Order_Cash(no string, isBuy bool, c *Config) (Result, error) {
 			"ACNT_PRDT_CD": c.Account.ProductCode,
 			"PDNO":         no,
 			"ORD_DVSN":     "00",
-			"ORD_QTY":      "1",
-			"ORD_UNPR":     "10",
+			"ORD_QTY":      strconv.Itoa(qty),
+			"ORD_UNPR":     strconv.Itoa(price),
 		},
 	); err != nil {
 		return nil, fmt.Errorf("error while making request:%v", err)
+	} else if result, err := Send(req); err != nil {
+		return nil, fmt.Errorf("error while sending request:%v", err)
+	} else if result["rt_cd"].(string) != "0" {
+		return result, fmt.Errorf("request unsuccessful:%v", result["msg1"])
 	} else {
-		return Send(req)
+		return result, nil
 	}
 }

@@ -29,11 +29,16 @@ type AccessInfo struct {
 }
 
 type Config struct {
-	IsMock  bool        `yaml:"IsMock"`
-	Url     string      `yaml:"Url"`
-	Account AccountInfo `yaml:"Account"`
-	App     AppInfo     `yaml:"App"`
-	Access  AccessInfo  `yaml:"Access"`
+	IsMock  bool                   `yaml:"IsMock"`
+	Url     string                 `yaml:"Url"`
+	Account AccountInfo            `yaml:"Account"`
+	App     AppInfo                `yaml:"App"`
+	Access  AccessInfo             `yaml:"Access"`
+	Codes   map[string]interface{} `yaml:"Codes"`
+}
+
+func (c *Config) AddCode(code string) {
+	c.Codes[code] = nil
 }
 
 func NewConfig(isMock bool, url string,
@@ -66,9 +71,11 @@ func LoadConfig(path string, isMock bool) (*Config, error) {
 	data, _ := os.ReadFile(getPath(isMock, path))
 	if err := yaml.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("error while unmarshaling config:%v", err)
-	} else {
-		return &config, nil
+	} else if config.Codes == nil {
+		config.Codes = make(map[string]interface{})
 	}
+
+	return &config, nil
 }
 
 func (c Config) Save2File(path string) error {
@@ -77,7 +84,7 @@ func (c Config) Save2File(path string) error {
 		return fmt.Errorf("error while marshaling config:%v", err)
 	}
 
-	if err = os.WriteFile(getPath(c.IsMock, path), data, 0666); err != nil {
+	if err = os.WriteFile(getPath(c.IsMock, path), data, 0644); err != nil {
 		return fmt.Errorf("error while writing to %s:%v", path, err)
 	}
 
