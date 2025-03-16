@@ -40,7 +40,7 @@ func (s *Stock) Sync(config *Config) error {
 		return fmt.Errorf("failed to get stock(%s) data:%v", s.Code, err)
 	}
 
-	data := rawData["output"].(map[string]interface{})
+	data := rawData["output"].(Result)
 
 	// s.Name = data["bstp_kor_isnm"].(string)        // 종목명
 	s.Avail = data["temp_stop_yn"].(string) != "Y" // 거래 가능 여부

@@ -18,9 +18,13 @@ func main() {
 		log.Printf("Add %s stock ..", "329750")
 	}
 
-	if err := kisd.OrderCash("329750", 1, 13200, true); err != nil {
+	// if err := kisd.OrderCash("329750", 1, 13200, true); err != nil {
+	// 	log.Panic(err)
+	// } else {
+	// 	log.Printf("Buy %s stock ..", "329750")
+	// }
+
+	if err := kisd.AccountInfo(); err != nil {
 		log.Panic(err)
-	} else {
-		log.Printf("Buy %s stock ..", "329750")
 	}
 }
